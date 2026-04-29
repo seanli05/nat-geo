@@ -7,6 +7,19 @@ import subprocess
 import pandas as pd
 from model_pipeline import process_video_with_model
 
+# --- CONFIGURATION ---
+# Check if ffmpeg is in the system PATH; if not, look for it in the current folder
+FFMPEG_PATH = shutil.which("ffmpeg") 
+
+if not FFMPEG_PATH:
+    local_path = os.path.join(os.getcwd(), "ffmpeg.exe")
+    if os.path.exists(local_path):
+        FFMPEG_PATH = local_path
+    else:
+        # We define it as a fallback so the app doesn't crash immediately, 
+        # but we'll handle the error if someone tries to process a video.
+        FFMPEG_PATH = "ffmpeg"
+
 # Configure Streamlit to allow larger file uploads
 st.set_page_config(
     page_title="Sea Animals Video Processor",
@@ -74,12 +87,11 @@ def process_video(input_path, progress_bar, status_text):
     
     final_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
     subprocess.run([
-        "ffmpeg", "-i", temp_output,
-        "-c:v", "libx264",
-        "-preset", "ultrafast",
-        "-c:a", "aac",
-        "-y", final_output
-    ], capture_output=True, check=True)
+    FFMPEG_PATH, "-i", temp_output,
+    "-c:v", "libx264",
+    "-preset", "ultrafast",
+    "-c:a", "aac",
+    "-y", final_output], capture_output=True, check=True)
 
     os.unlink(temp_output) # clean temp file
     
